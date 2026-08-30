@@ -2,7 +2,6 @@
 
 Production-grade Data Engineering & Product Analytics project implementing **Clickstream Sessionization**, **Conversion Funnel Analysis**, **Time-to-Buy (TTB) Tracking**, **Polars Cohort Retention Matrix Engine**, and **Apache Superset BI Data Marts** on multi-million row e-commerce clickstream data.
 
----
 
 ## 1. Visual Analytics & Core Insights
 
