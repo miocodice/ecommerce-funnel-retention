@@ -30,61 +30,42 @@ This project analyzes user shopping journeys, friction points, and retention dyn
 
 ---
 
-## 3. Project Structure
-
-```
-PJ EcF & RA/
-├── README.md                          # Project documentation & execution guide
-├── requirements.txt                   # Python dependencies (Polars, Plotly, PyArrow, etc.)
-├── sql/
-│   ├── 01_ddl_and_sessionization.sql  # Partitioned DDL & 30-min inactivity sessionization
-│   ├── 02_funnel_and_dropoff.sql      # Strict chronological funnel & TTB calculation
-│   └── 03_superset_views.sql          # Analytical views for Superset BI
-├── python/
-│   ├── generate_sample_data.py        # Synthetic clickstream dataset generator
-│   └── retention_analysis.py          # Production Polars cohort retention script
-├── data/                              # Local parquet/csv data store
-└── docs/
-    ├── superset_dashboard_spec.md     # Apache Superset Dashboard Architecture
-    └── cohort_retention_heatmap.html  # Generated interactive Plotly retention heatmap
-```
-
----
-
-## 4. Step-by-Step Implementation Guide
+## 3. Quick Start & Execution Guide
 
 ### Step 1: DDL & Database Sessionization (SQL)
 Run `sql/01_ddl_and_sessionization.sql` in PostgreSQL:
 ```bash
 psql -h localhost -U postgres -d ecommerce_db -f sql/01_ddl_and_sessionization.sql
 ```
-- **Key Logic**: Reconstructs missing/broken frontend sessions using a **30-minute inactivity window** via `LAG(event_time) OVER (PARTITION BY user_id ORDER BY event_time)`.
+> [!NOTE]
+> Reconstructs missing/broken frontend sessions using a **30-minute inactivity window** via `LAG(event_time) OVER (PARTITION BY user_id ORDER BY event_time)`.
 
 ### Step 2: Funnel & Time-to-Buy (TTB) Calculation (SQL)
 Run `sql/02_funnel_and_dropoff.sql`:
 ```bash
 psql -h localhost -U postgres -d ecommerce_db -f sql/02_funnel_and_dropoff.sql
 ```
-- **Key Logic**: Computes strict sequential step progression (`View` $\rightarrow$ `Cart` $\rightarrow$ `Purchase`) per user session, calculating:
-  - Absolute Unique Users at each step.
-  - Step Conversion Rates (CR %) and Drop-off Rates (% loss).
-  - TTB (Time-to-Buy in minutes) using `FIRST_VALUE()`.
+> [!NOTE]
+> Computes strict sequential step progression (`View` $\rightarrow$ `Cart` $\rightarrow$ `Purchase`) per user session, calculating unique users, step conversion rates (CR %), drop-off rates (% loss), and TTB (Time-to-Buy in minutes).
 
 ### Step 3: Cohort & Retention Analysis (Python Polars)
-Generate test data (if needed) and run cohort analysis:
+Install dependencies and run the cohort analysis engine:
 ```bash
-# 1. Generate synthetic dataset
+pip install -r requirements.txt
+
+# 1. (Optional) Generate synthetic dataset
 python python/generate_sample_data.py
 
-# 2. Run weekly cohort retention study & generate heatmap
+# 2. Run weekly cohort retention study & generate interactive heatmap
 python python/retention_analysis.py --input data/sample_raw_events.parquet --granularity W --output_html docs/cohort_retention_heatmap.html
 ```
-- Open `docs/cohort_retention_heatmap.html` in your browser to view the interactive Plotly Heatmap with retention percentages and hover details.
+> [!TIP]
+> Open `docs/cohort_retention_heatmap.html` in any browser to inspect the interactive Plotly heatmap with retention percentages and hover details.
 
-### Step 4 & 5: BI Analytical Views & Superset Dashboard
-Deploy `sql/03_superset_views.sql` to expose views to Apache Superset:
+### Step 4: BI Analytical Views & Superset Dashboard
+Deploy `sql/03_superset_views.sql` to expose production data marts to Apache Superset:
 - `v_kpi_daily`: Daily DAU, Revenue, AOV, ARPU, Overall CR.
 - `v_funnel_summary`: Daily funnel aggregated by category & brand.
 - `v_cohort_retention`: Flat cohort dataset for BI heatmaps.
 
-Refer to [`docs/superset_dashboard_spec.md`](docs/superset_dashboard_spec.md) for step-by-step instructions on setting up KPI cards, funnel charts, and Jinja filters in Superset.
+Refer to [`docs/superset_dashboard_spec.md`](docs/superset_dashboard_spec.md) for full dashboard specifications, chart configurations, and Jinja filters.
