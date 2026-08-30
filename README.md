@@ -1,36 +1,60 @@
 # E-commerce Funnel & Retention Analysis
 
-Production-grade pet project implementing **Clickstream Sessionization**, **Conversion Funnel Analysis**, **Time-to-Buy (TTB) Tracking**, **Polars Cohort Retention Matrix Engine**, and **Apache Superset Data Marts** based on multi-million row Kaggle eCommerce behavior data.
+Production-grade Data Engineering & Product Analytics project implementing **Clickstream Sessionization**, **Conversion Funnel Analysis**, **Time-to-Buy (TTB) Tracking**, **Polars Cohort Retention Matrix Engine**, and **Apache Superset BI Data Marts** on multi-million row e-commerce clickstream data.
+
+![Apache Superset E-Commerce Analytics Dashboard](docs/images/superset_dashboard_preview.png)
 
 ---
 
-## 1. Context & Data Architecture
+## 1. Visual Analytics & Core Insights
 
-This project analyzes user shopping journeys, friction points, and retention dynamics in multi-category e-commerce stores.
+### Conversion Funnel & Drop-off Friction
+Tracks strict sequential user transitions ($View \rightarrow Cart \rightarrow Purchase$) per session, isolating drop-off bottlenecks and measuring step conversion rates alongside Time-to-Buy (TTB).
+
+![E-Commerce Conversion Funnel](docs/images/conversion_funnel.png)
+
+### Cohort User Retention Matrix
+High-performance cohort retention engine computed with **Polars LazyFrames**, grouping users by their initial acquisition week and tracking behavioral decay over subsequent weeks.
+
+![Weekly Cohort Retention Heatmap](docs/images/cohort_retention_heatmap.png)
+
+### Executive Daily KPI Trends
+Continuous tracking of Daily Active Users (DAU), Gross Merchandise Volume (Revenue), and Average Order Value (AOV) across all product categories.
+
+![Daily Executive KPI Trends](docs/images/daily_kpi_trends.png)
+
+---
+
+## 2. Context & Data Architecture
+
+This project models and analyzes user shopping journeys, friction points, and retention dynamics in multi-category retail environments.
 
 ### Data Schema (`raw_events`)
-- `event_time` (`TIMESTAMPTZ`): UTC timestamp of event.
-- `event_type` (`VARCHAR`): Action type (`view`, `cart`, `remove_from_cart`, `purchase`).
-- `product_id` (`BIGINT`): Unique product SKU ID.
-- `category_id` (`BIGINT`): Broad category ID.
-- `category_code` (`VARCHAR`): Hierarchical category string (e.g., `electronics.smartphone`).
-- `brand` (`VARCHAR`): Manufacturer brand name.
-- `price` (`NUMERIC(10, 2)`): Product price in USD.
-- `user_id` (`BIGINT`): Unique user ID.
-- `user_session` (`UUID`): Frontend clickstream session identifier.
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `event_time` | `TIMESTAMPTZ` | UTC timestamp of the clickstream event |
+| `event_type` | `VARCHAR(30)` | Action type (`view`, `cart`, `remove_from_cart`, `purchase`) |
+| `product_id` | `BIGINT` | Unique product SKU identifier |
+| `category_id` | `BIGINT` | Broad category identifier |
+| `category_code` | `VARCHAR(255)` | Hierarchical category string (e.g. `electronics.smartphone`) |
+| `brand` | `VARCHAR(255)` | Manufacturer brand name |
+| `price` | `NUMERIC(10, 2)` | Product price in USD |
+| `user_id` | `BIGINT` | Unique user identifier |
+| `user_session` | `UUID` | Frontend clickstream session identifier |
 
 ---
 
-## 2. Technical Stack & Key Decisions
+## 3. Technical Stack & Key Decisions
 
 - **Database**: PostgreSQL 15+ with Range Partitioning by `event_time` and composite indexes on `(user_id, event_time)` and `(event_type, event_time)`.
 - **SQL Analytics**: Strict use of Window Functions (`LAG`, `ROW_NUMBER`, `FIRST_VALUE`, `SUM() OVER`) and CTEs. Zero reliance on plain `GROUP BY` for funnel ordering.
-- **Python Engine**: **Polars** (`polars>=0.20.0`) utilizing lazy evaluation (`scan_parquet` / `scan_csv`) to process tens of millions of clickstream events with low RAM footprint.
-- **Visualization**: Interactive Plotly Cohort Heatmaps (`plotly.graph_objects`) and Apache Superset BI Data Marts.
+- **Python Engine**: **Polars** (`polars>=0.20.0`) utilizing lazy evaluation (`scan_parquet` / `scan_csv`) to process tens of millions of clickstream events in streaming mode with minimal RAM footprint.
+- **Visualization**: Interactive Plotly Cohort Heatmaps (`plotly.graph_objects`), Matplotlib/Seaborn report exports, and Apache Superset BI Data Marts.
 
 ---
 
-## 3. Quick Start & Execution Guide
+## 4. Quick Start & Execution Guide
 
 ### Step 1: DDL & Database Sessionization (SQL)
 Run `sql/01_ddl_and_sessionization.sql` in PostgreSQL:
